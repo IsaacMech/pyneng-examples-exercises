@@ -50,3 +50,8 @@ london_co = {
         "routing": True,
     },
 }
+name = input('Введите имя устройства: ')
+params = london_co.get(name, {'устройство не найдено': None, 'нет доступных параметров': None})
+param = input('Введите имя параметра (' + ', '.join(params.keys()) + '): ')
+print(params.setdefault(param))
+

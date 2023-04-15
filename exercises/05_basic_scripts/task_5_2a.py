@@ -49,3 +49,26 @@ bin_ip = "00001010000000010000000111000011"
 Ограничение: Все задания надо выполнять используя только пройденные темы.
 
 """
+
+template_net = """
+Network:
+{0:<10}{1:<10}{2:<10}{3:<10}
+{0:08b}  {1:08b}  {2:08b}  {3:08b}
+"""
+template_mask = """
+Mask:
+/{0}
+{1:<10}{2:<10}{3:<10}{4:<10}
+{1:08b}  {2:08b}  {3:08b}  {4:08b}
+"""
+net = input('Введите адрес сети в формате IP/Prefix: ')
+ip, prefix = (net.split('/')[0], net.split('/')[1])
+ip = '{:08b}{:08b}{:08b}{:08b}'.format(int(ip.split('.')[0]), int(ip.split('.')[1]), int(ip.split('.')[2]), int(ip.split('.')[3]))
+ip = ip[0:int(prefix)] + '0' * (32 - int(prefix))
+ip = [int(ip[0:8], 2), int(ip[8:16], 2), int(ip[16:24], 2), int(ip[24:32], 2)]
+
+bin_mask = '1' * int(prefix) + '0' * (32 - int(prefix))
+mask = [int(bin_mask[0:8], 2), int(bin_mask[8:16], 2), int(bin_mask[16:24], 2), int(bin_mask[24:32], 2)]
+
+print(template_net.format(ip[0], ip[1], ip[2], ip[3]), end = '')
+print(template_mask.format(prefix, mask[0], mask[1], mask[2], mask[3]), end = '')

@@ -46,3 +46,6 @@ london_co = {
         "routing": True,
     },
 }
+
+usr_inp = input('Введите имя устройства: ')
+print(london_co.get(usr_inp, 'Нет такого устройства'))
