@@ -12,3 +12,17 @@
 
 Ограничение: Все задания надо выполнять используя только пройденные темы.
 """
+
+ip = input('Введите IP: ')
+ip_type = 'unused'
+octet1 = int(ip.split('.')[0])
+if ip == '0.0.0.0':
+    ip_type = 'unassigned'
+elif ip == '255.255.255.255':
+    ip_type = 'local broadcast'
+elif octet1 >= 1 and octet1 <= 223:
+    ip_type = 'unicast'
+elif octet1 > 223 and octet1 <= 239:
+    ip_type = 'multicast'
+
+print(ip_type)
