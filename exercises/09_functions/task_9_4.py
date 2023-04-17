@@ -64,3 +64,26 @@ def ignore_command(command, ignore):
         if word in command:
             ignore_status = True
     return ignore_status
+
+def convert_config_to_dict(config_filename):
+    try:
+        fhand = open(config_filename, 'r')
+    except:
+        print(f'Невозможно открыть файл {config_filename}')
+        exit()
+
+    main_cmd = ''
+    result = {}
+
+    for line in fhand:
+        if not len(line.strip()) or line[0] == '!' or ignore_command(line, ignore):
+            continue
+        if line[0] == ' ':
+            result[main_cmd].append(line.strip())
+            continue
+        main_cmd = line.strip()
+        result[main_cmd] = []
+        
+    return result
+
+print(convert_config_to_dict('config_sw1.txt'))
