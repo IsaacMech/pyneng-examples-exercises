@@ -14,3 +14,14 @@ Outbound Interface    FastEthernet0/0
 Ограничение: Все задания надо выполнять используя только пройденные темы.
 
 """
+template = '''
+Prefix                {}
+AD/Metric             {}
+Next-Hop              {}
+Last update           {}
+Outbound Interface    {}
+'''
+with open('ospf.txt', 'r') as fhand:
+    for line in fhand:
+        words = line.replace(',', '').replace('via', '').replace('[', '').replace(']', '').split()[1:]
+        print(template.format(*words))

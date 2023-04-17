@@ -17,3 +17,35 @@
 """
 
 ignore = ["duplex", "alias", "configuration"]
+
+import sys
+
+if len(sys.argv) < 3:
+    print('Недостаточно аргументов!')
+    exit()
+
+try:
+    fhand = open(sys.argv[1], 'r')
+except:
+    print(f'Не удалось открыть файл {sys.argv[1]}!')
+    exit()
+
+try:
+    fout = open(sys.argv[2], 'w')
+except:
+    print(f'Не удалось открыть файл для записи {sys.argv[2]}!')
+    exit()
+
+for line in fhand:
+    if not len(line) or line[0] == '!':
+        continue
+    try:
+        for cmd in ignore:
+            if cmd in line:
+                raise Exception
+    except:
+        continue
+    fout.write(line)
+
+fhand.close()
+fout.close()

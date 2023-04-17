@@ -40,3 +40,28 @@
 Ограничение: Все задания надо выполнять используя только пройденные темы.
 
 """
+
+filename = 'CAM_table.txt'
+
+try:
+    fhand = open(filename, 'r')
+except:
+    print(f'Не удалось открыть файл {filename}!')
+    exit()
+
+template = '{0:<9}{1:<20}{3}'
+buffer = []
+
+for line in fhand:
+    line = line.split()
+    if not len(line) or not line[0].isdigit():
+        continue
+    line[0] = int(line[0])
+    buffer.append(line)
+
+buffer.sort()
+
+for mac in buffer:
+    print(template.format(*mac))
+
+fhand.close()
