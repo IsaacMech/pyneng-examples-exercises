@@ -43,8 +43,25 @@ def parse_cdp_neighbors(command_output):
     и с файлами и с выводом с оборудования.
     Плюс учимся работать с таким выводом.
     """
+    if not 'show cdp neighbors' in command_output:
+        return None
+    local_id = command_output[:command_output.index('>')].strip()
+    isListStart = False
+    result = {}
+    for line in command_output.split('\n'):
+        if 'Device ID' in line:
+            isListStart = True
+            continue
+        if not isListStart or not len(line.split()):
+            continue
+        line = line.strip().split()
+        local_intf = line[1] + line[2]
+        remote_id = line[0]
+        remote_intf = line[-2] + line[-1]
+        result[(local_id, local_intf)] = (remote_id, remote_intf)
+    return result
 
 
 if __name__ == "__main__":
-    with open("sh_cdp_n_sw1.txt") as f:
+    with open("sh_cdp_n_r3.txt") as f:
         print(parse_cdp_neighbors(f.read()))
