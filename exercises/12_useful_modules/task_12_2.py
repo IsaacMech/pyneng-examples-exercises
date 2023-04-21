@@ -34,3 +34,44 @@
  '172.21.41.129', '172.21.41.130', '172.21.41.131', '172.21.41.132']
 
 """
+
+import ipaddress as ip_lib
+
+def convert_ranges_to_ip_list(ip_list):
+    '''
+    Функция принимает на вход список IP адресов и диапазонов IP адресов в виде строк
+    и возвращает список IP строк с раскрытыми диапазонами (каждый диапазон преобразован в адреса).
+    вход: список строк
+    выход: список строк
+    '''
+    result = []
+    for ip in ip_list:
+        if '-' not in ip:
+            result.append(ip)
+            continue
+
+        range_ip = ip.split('-')
+        start_ip = range_ip[0]
+
+        if len(range_ip[1].split('.')) == 1:
+            end_ip = start_ip[:start_ip.rfind('.')] + '.' + range_ip[1]
+        else:
+            end_ip = range_ip[1]
+
+        start_ip = ip_lib.IPv4Address(start_ip)
+        end_ip = ip_lib.IPv4Address(end_ip)
+
+        for ip_int in range(int(start_ip), int(end_ip) + 1):
+            result.append(str(ip_lib.IPv4Address(ip_int)))
+
+    return result
+'''
+ip_list = [
+    '192.168.0.1',
+    '192.168.0.100-110',
+    '8.8.4.4-8.8.8.8',
+    '1.1.1.1'
+]
+
+print(convert_ranges_to_ip_list(ip_list))
+'''

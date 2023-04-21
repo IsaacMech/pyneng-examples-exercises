@@ -18,3 +18,11 @@ Reachable    Unreachable
              10.1.1.9
 
 """
+
+from tabulate import tabulate
+
+def print_ip_table(online_ips, offline_ips):
+    table = {'Reachable': online_ips, 'Unreachable': offline_ips}
+    print(tabulate(table, headers='keys', stralign='left', numalign='left'))
+
+#print_ip_table([1,2,3], [9,8,7])
