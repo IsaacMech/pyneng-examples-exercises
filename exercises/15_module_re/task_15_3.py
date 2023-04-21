@@ -32,3 +32,19 @@ object network LOCAL_10.1.9.5
 
 Во всех правилах для ASA интерфейсы будут одинаковыми (inside,outside).
 """
+
+import re
+
+template = '''
+object network LOCAL_{0}
+ host {0}
+ nat (inside,outside) static interface service {1} {2} {3}'''
+
+def convert_ios_nat_to_asa(iosfile, asafile):
+    regex = re.compile(r'ip nat \w+ source \w+ (?P<protocol>\w+) (?P<host_ip>(?:\d+\.){3}\d+) (?P<in_port>\d+) interface \S+ (?P<out_port>\d+)')
+    with open(iosfile, 'r') as iosfhand, open(asafile, 'w') as asafhand:
+        for rule in regex.finditer(iosfhand.read()):
+            data = rule.groupdict()
+            asafhand.write(template.format(data['host_ip'], data['protocol'], data['in_port'], data['out_port']))
+
+convert_ios_nat_to_asa('cisco_nat_config.txt', 'test.txt')
