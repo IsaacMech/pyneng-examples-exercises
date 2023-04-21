@@ -21,3 +21,12 @@
 Проверить работу функции на примере файла sh_ip_int_br.txt.
 
 """
+
+import re
+
+def parse_sh_ip_int_br(filename):
+    regex = re.compile(r'(\S+)\s*(unassigned|(?:\d+\.){3}\d+)\s*\w+\s+\w+\s+(\w+ ?\w+)\s+(\w+)')
+    with open(filename, 'r') as fileh:
+        return regex.findall(fileh.read())
+
+#print(parse_sh_ip_int_br('sh_ip_int_br.txt'))
