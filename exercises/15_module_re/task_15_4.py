@@ -24,3 +24,11 @@ interface Loopback0
 
 Проверить работу функции на примере файла config_r1.txt.
 """
+import re
+
+def get_ints_without_description(filename):
+    regex = re.compile(r'interface (\S+)(?![^!]+description)[^!]+?!')
+    with open(filename, 'r') as fileh:
+        return regex.findall(fileh.read())
+
+#print(get_ints_without_description('config_r1.txt'))
