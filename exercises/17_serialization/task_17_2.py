@@ -44,8 +44,29 @@
 """
 
 import glob
+import re
+import csv
 
 sh_version_files = glob.glob("sh_vers*")
 # print(sh_version_files)
 
 headers = ["hostname", "ios", "image", "uptime"]
+
+
+def parse_sh_version(version_str):
+    try:
+        result = re.search(r'Cisco.+?Version ([^,]+)[\S\s]+is (\d+ days, \d+ hours, \d+ minutes)[\S\s]+image file is \"(\S+)\"[\S\s]+',version_str).groups()
+        return result[0], result[2], result[1]
+    except:
+        return None
+
+#print(parse_sh_version(open('sh_version_r1.txt', 'r').read()))
+def write_inventory_to_csv(data_filenames, csv_filename):
+    with open(csv_filename, 'w', newline='') as csv_fileh:
+        inv_csv = csv.writer(csv_fileh)
+        inv_csv.writerow(headers)
+        for filename in data_filenames:
+            host = re.match('sh_version_(\S+).txt', filename)[1]
+            with open(filename, 'r') as data_fileh:
+                inv_csv.writerow((host,) + parse_sh_version(data_fileh.read()))
+#write_inventory_to_csv(sh_version_files, 'test.csv')

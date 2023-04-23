@@ -43,3 +43,22 @@
 > pip install graphviz
 
 """
+#from task_17_3a import generate_topology_from_cdp
+from draw_network_graph import draw_topology
+#from pprint import pprint
+import yaml
+
+
+def transform_topology(yaml_file):
+    with open(yaml_file, 'r') as fileh:
+        topology = yaml.safe_load(fileh)
+    result = {}
+    for device, intfs in topology.items():
+        for intf, rdev in intfs.items():
+            endpoint = rdev.popitem()
+            if endpoint not in result.keys():
+                result[(device, intf)] = endpoint
+    return result
+
+#pprint(transform_topology('test.yaml'))
+draw_topology(transform_topology('test.yaml'))
