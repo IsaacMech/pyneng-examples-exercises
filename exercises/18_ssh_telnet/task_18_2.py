@@ -45,4 +45,19 @@ R1#
 с помощью функции send_config_commands.
 """
 
+import netmiko
+import yaml
+
 commands = ["logging 10.255.255.1", "logging buffered 20010", "no logging console"]
+
+def send_config_commands(device, commands):
+    with netmiko.ConnectHandler(**device) as devcon:
+        devcon.enable()
+        return devcon.send_config_set(commands)
+
+if __name__ == '__main__':
+    with open('devices.yaml', 'r') as fileh:
+        devices = yaml.safe_load(fileh)
+
+    for device in devices:
+        print(send_config_commands(device, commands))

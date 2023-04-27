@@ -98,3 +98,33 @@ commands_with_errors = ["logging 0255.255.1", "logging", "a"]
 correct_commands = ["logging buffered 20010", "ip http server"]
 
 commands = commands_with_errors + correct_commands
+import netmiko
+import yaml
+import re
+from pprint import pprint
+
+error_re = re.compile('(% .+)\n')
+
+def send_config_commands(device, commands, log=True):
+    if log:
+        print(f'''Подключаюсь к {device['host']}...''')
+    bad_cmd = {}
+    ok_cmd = {}
+    with netmiko.ConnectHandler(**device) as devcon:
+        devcon.enable()
+        for command in commands:
+            result = devcon.send_config_set((command, 'exit'))
+            error = error_re.search(result)
+            if error:
+                print(f'Команда "{command}" выполнилась с ошибкой "{error[1]}" на устройстве {device["host"]}')
+                bad_cmd[command] = result
+            else:
+                ok_cmd[command] = result
+        return ok_cmd, bad_cmd
+
+if __name__ == '__main__':
+    with open('devices.yaml', 'r') as fileh:
+        devices = yaml.safe_load(fileh)
+
+    for device in devices:
+        pprint(send_config_commands(device, commands))

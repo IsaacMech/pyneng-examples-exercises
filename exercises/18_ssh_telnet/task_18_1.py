@@ -18,8 +18,11 @@
 
 """
 import yaml
+from netmiko import ConnectHandler
 
-
+def send_show_command(device, command):
+    with ConnectHandler(**device) as dev:
+        return dev.send_command(command)
 
 if __name__ == "__main__":
     command = "sh ip int br"
