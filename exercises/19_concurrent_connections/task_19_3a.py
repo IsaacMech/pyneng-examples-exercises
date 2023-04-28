@@ -52,7 +52,33 @@ O        10.30.0.0/24 [110/20] via 192.168.100.1, 07:12:03, Ethernet0/0
 # Этот словарь нужен только для проверки работа кода, в нем можно менять IP-адреса
 # тест берет адреса из файла devices.yaml
 commands = {
-    "192.168.100.3": ["sh ip int br", "sh ip route | ex -"],
-    "192.168.100.1": ["sh ip int br", "sh int desc"],
-    "192.168.100.2": ["sh int desc"],
+    "10.0.100.100": ["sh ip int br", "sh ip route | ex -"],
+    "10.0.100.101": ["sh ip int br", "sh int desc"],
+    "10.0.100.102": ["sh int desc"],
 }
+
+import yaml
+from concurrent.futures import ThreadPoolExecutor
+from task_19_2 import send_show_command
+
+def send_command_to_devices(devices, commands_dict, filename, limit=3):
+    results = []
+    with ThreadPoolExecutor(max_workers=limit) as executor:
+        futures = []
+        for host in commands_dict:
+            for device in devices:
+                if host != device['host']:
+                    continue
+                for command in commands_dict[host]:
+                    futures.append(executor.submit(send_show_command, device, command))
+                break
+        for future in futures:
+            result = future.result().split('\n')
+            results.append(result[-1] + '\n'.join(result[:-1]) + '\n')
+    with open(filename, 'w') as fileh:
+        fileh.writelines(results)
+
+if __name__ == '__main__':
+    with open('devices.yaml', 'r') as fileh:
+        devices = yaml.safe_load(fileh)
+    send_command_to_devices(devices, commands, 'test.txt')

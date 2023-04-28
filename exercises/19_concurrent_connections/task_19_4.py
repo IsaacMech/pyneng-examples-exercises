@@ -105,3 +105,44 @@ R3#
 
 Для выполнения задания можно создавать любые дополнительные функции.
 """
+import yaml
+from netmiko import ConnectHandler
+from concurrent.futures import ThreadPoolExecutor
+from task_19_2 import send_show_command
+
+def send_config_commands(device, command_list):
+    with ConnectHandler(**device) as dev:
+        dev.enable()
+        return dev.send_config_set(command_list)
+
+def send_commands_to_devices(devices, filename, *, show=None, config=None, limit=3):
+    results = []
+    if (show and config) or (not show and not config):
+        raise ValueError
+    if show and (type(show) != type([])):
+        show = [show]
+    if config and (type(config) != type([])):
+        config = [config]
+    with ThreadPoolExecutor(max_workers=limit) as executor:
+        futures = []
+        if show:
+            for device in devices:
+                for command in show:
+                    futures.append(executor.submit(send_show_command, device, command))
+            for future in futures:
+                result = future.result().split('\n')
+                results.append(result[-1] + '\n'.join(result[:-1]) + '\n')
+        if config:
+            for device in devices:
+                futures.append(executor.submit(send_config_commands, device, config))
+            for future in futures:
+                results.append(future.result() + '\n')
+    with open(filename, 'w') as fileh:
+        fileh.writelines(results)
+
+config_commands = ['router ospf 55', 'network 0.0.0.0 255.255.255.255 area 0']
+
+if __name__ == '__main__':
+    with open('devices.yaml', 'r') as fileh:
+        devices = yaml.safe_load(fileh)
+    send_commands_to_devices(devices, 'test.txt', config=config_commands)
