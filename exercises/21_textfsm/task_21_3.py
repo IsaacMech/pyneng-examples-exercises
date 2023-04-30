@@ -20,3 +20,28 @@
 
 Проверить работу функции на примере вывода команды sh ip int br.
 """
+import textfsm
+from netmiko import ConnectHandler
+
+def parse_command_dynamic(command_output, attributes_dict, index_file='index', templ_path='templates'):
+    clitable = textfsm.clitable.CliTable(index_file, templ_path)
+    result = []
+    clitable.ParseCmd(command_output, attributes_dict)
+    for row in clitable:
+        result.append(dict(zip(clitable.header, row)))
+    return result
+
+# вызов функции должен выглядеть так
+if __name__ == "__main__":
+    r1_params = {
+        "device_type": "cisco_ios",
+        "host": "10.0.100.100",
+        "username": "cisco",
+        "password": "cisco",
+        "secret": "cisco",
+    }
+    with ConnectHandler(**r1_params) as r1:
+        r1.enable()
+        output = r1.send_command("sh ip int br")
+    result = parse_command_dynamic(output, { 'Command': 'sh ip int br', 'Vendor': 'cisco_ios' })
+    print(result)

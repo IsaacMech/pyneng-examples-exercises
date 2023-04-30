@@ -15,14 +15,19 @@
 и шаблоне templates/sh_ip_int_br.template.
 
 """
+import textfsm
 from netmiko import ConnectHandler
 
+def parse_command_output(template, command_output):
+    with open(template, 'r') as fileh:
+        fsm = textfsm.TextFSM(fileh)
+        return [fsm.header] + fsm.ParseText(command_output)
 
 # вызов функции должен выглядеть так
 if __name__ == "__main__":
     r1_params = {
         "device_type": "cisco_ios",
-        "host": "192.168.100.1",
+        "host": "10.0.100.100",
         "username": "cisco",
         "password": "cisco",
         "secret": "cisco",
