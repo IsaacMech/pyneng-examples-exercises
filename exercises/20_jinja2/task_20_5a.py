@@ -40,8 +40,63 @@
 
 data = {
     "tun_num": None,
-    "wan_ip_1": "192.168.100.1",
-    "wan_ip_2": "192.168.100.2",
+    "wan_ip_1": "10.0.100.100",
+    "wan_ip_2": "10.0.100.101",
     "tun_ip_1": "10.0.1.1 255.255.255.252",
     "tun_ip_2": "10.0.1.2 255.255.255.252",
 }
+
+import yaml
+from concurrent.futures import ThreadPoolExecutor
+from netmiko import ConnectHandler
+from task_20_5 import create_vpn_config
+
+def get_tun_intf_list(device):
+    '''
+    Берёт на вход словарь параметров подключений, возвращает список названий интерфейсов
+    input: словарь с параметра подключения
+    output: список названий интерфейсов
+    '''
+    result = []
+    with ConnectHandler(**device) as dev:
+        tunnels = dev.send_command('show interfaces summary | include Tunnel')
+    for tunnel in tunnels.split('\n'):
+        try:
+            result.append(tunnel.strip().split()[0])
+        except:
+            continue
+    return result
+
+def send_config_commands(device, commands):
+    with ConnectHandler(**device) as devcon:
+        devcon.enable()
+        return devcon.send_config_set(commands)
+
+def configure_vpn(src_device_params, dst_device_params, src_template, dst_template, vpn_data_dict):
+    if not vpn_data_dict['tun_num']:
+        tunnels = []
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            for result in executor.map(get_tun_intf_list, (src_device_params, dst_device_params)):
+                tunnels += result
+        num = 1
+        while True:
+            if 'Tunnel' + str(num) in tunnels:
+                num += 1
+                continue
+            break
+        vpn_data_dict['tun_num'] = num
+    src_conf, dst_conf = create_vpn_config(src_template, dst_template, vpn_data_dict)
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        futures = []
+        futures.append(executor.submit(send_config_commands, src_device_params, src_conf.split('\n')))
+        futures.append(executor.submit(send_config_commands, dst_device_params, dst_conf.split('\n')))
+        return futures[0].result(), futures[1].result()
+
+if __name__ == "__main__":
+    with open('devices.yaml', 'r') as fileh:
+        devices = yaml.safe_load(fileh)
+    src_device = devices[0]
+    dst_device = devices[1]
+    template1_file = "templates/gre_ipsec_vpn_1.txt"
+    template2_file = "templates/gre_ipsec_vpn_2.txt"
+    print(configure_vpn(src_device, dst_device, template1_file, template2_file, data))

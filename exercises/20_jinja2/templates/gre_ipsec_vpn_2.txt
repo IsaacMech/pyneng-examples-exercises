@@ -1,0 +1,11 @@
+{% extends 'gre_ipsec_vpn_1.txt' %}
+{% block isakmp_addr %}
+crypto isakmp key cisco address {{ wan_ip_1 }}
+{% endblock %}
+{% block intf_tun %}
+interface Tunnel {{ tun_num }}
+ ip address {{ tun_ip_2 }}
+ tunnel source {{ wan_ip_2 }}
+ tunnel destination {{ wan_ip_1 }}
+ tunnel protection ipsec profile GRE
+{% endblock %}
