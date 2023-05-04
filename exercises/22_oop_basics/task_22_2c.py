@@ -63,3 +63,77 @@ ValueError                                Traceback (most recent call last)
 ValueError: При выполнении команды "logging 0255.255.1" на устройстве 192.168.100.1 возникла ошибка -> Invalid input detected at '^' marker.
 
 """
+import yaml
+import re
+from textfsm import clitable
+from telnetlib import Telnet
+from time import sleep
+
+def parse_command_dynamic(command_output, attributes_dict, index_file='index', templ_path='templates'):
+    clit = clitable.CliTable(index_file, templ_path)
+    result = []
+    clit.ParseCmd(command_output, attributes_dict)
+    for row in clit:
+        result.append(dict(zip(clit.header, row)))
+    return result
+
+class CiscoTelnet:
+    _regex = re.compile(r'%\s+(.+)\r\n')
+    def __init__(self, ip, username, password, secret):
+        self.connection = Telnet(ip)
+        self.ip = ip
+        self._logpass(username, password)
+        self._enable(secret)
+    def __enter__(self, ip, username, password, secret):
+        self.__init__(ip, username, password, secret)
+    def _logpass(self, username, password):
+        self.connection.read_until(b'User')
+        self._write_line(username)
+        self.connection.read_until(b'Pass')
+        self._write_line(password)
+        self.connection.read_until(b'>')
+    def _enable(self, secret):
+        self._write_line('enable')
+        self.connection.read_until(b'Pass')
+        self._write_line(secret)
+        self.connection.read_until(b'#')
+    def _write_line(self, line):
+        self.connection.write(line.encode('ascii') + b'\n')
+    def send_show_command(self, line, parse=True, templates='templates', index='index'):
+        self._write_line(line)
+        result = self.connection.read_until(b'#').decode()
+        if parse:
+            result = parse_command_dynamic(result, { 'Vendor': 'cisco_ios', 'Command': line }, index, templates)
+        return result
+    def send_config_commands(self, command_list, strict=True):
+        if type(command_list) == type(''):
+            command_list = [command_list]
+        self._write_line('conf t')
+        result = self.connection.read_until(b'#').decode()
+        for command in command_list:
+            try:
+                self._write_line(command)
+                temp = self.connection.read_until(b'#').decode()
+                if '%' in temp:
+                    raise Exception
+                result += temp
+            except Exception:
+                err = self._regex.search(temp)[1]
+                error_text = f'При выполнении команды "{command}" на устройстве {self.ip} возникла ошибка -> {err}'
+                if strict:
+                    raise ValueError(error_text)
+                print(error_text)
+                result += temp
+                continue
+        self._write_line('end')
+        return result + self.connection.read_until(b'#').decode()
+    def __del__(self):
+        self.connection.close()
+    def __exit__(self):
+        self.__del__(self)
+
+if __name__ == '__main__':
+    with open('devices.yaml', 'r') as fileh:
+        devices = yaml.safe_load(fileh)
+    for device in devices:
+        print(CiscoTelnet(**device).send_config_commands(['interface FastEthernet0/12', 'no showdown'], strict=False))
