@@ -63,3 +63,56 @@ $ python get_data.py ip vlan 10
 Пожалуйста, введите два или ноль аргументов
 
 """
+
+import sqlite3
+
+class DBHandler():
+    def __init__(self, filename, create=False):
+        '''
+        Выполняет открытие базы даннных. Если файла не существует и create не передан как True, поднимает исключение ValueError
+        '''
+        try:
+            open(filename, 'r')
+            if create:
+                print('База данных существует.')
+        except:
+            if create:
+                print('Создаю базу данных...')
+            else:
+                raise ValueError
+        self.connection = sqlite3.connect(filename)
+        self.cursor = self.connection.cursor()
+    def create_schema(self, *, from_str=None, from_file=None):
+        if from_str and from_file or (not from_str and not from_file):
+            raise ValueError
+        if from_str:
+            schema = from_str
+        elif from_file:
+            with open(from_file, 'r') as fileh:
+                schema = fileh.read()
+        with self.connection as con:
+            con.executescript(schema)
+    def save(self):
+        self.connection.commit()
+    def add_data(self, table, rows, data_tuple):
+        assert type(table) == str,'table должен быть строкой!'
+        assert type(rows) == int and rows > 0,'rows должен быть больше 0!'
+        assert type(data_tuple) == tuple,'data_tuple должен быть кортежем!'
+        try:
+            self.connection.execute(f'INSERT INTO {table} VALUES (' + '?, '*(rows-1) + '?)', data_tuple)
+        except sqlite3.IntegrityError as e:
+            print(f'При добавлении данных: {data_tuple} Возникла ошибка: {e}')
+    def add_data_dict(self, data_dict):
+        for table in data_dict:
+            print(f'Добавляю данные в таблицу {table}...')
+            self.cursor.execute(f'SELECT COUNT(*) FROM pragma_table_info(\'{table}\')')
+            rows = self.cursor.fetchone()[0]
+            for data in data_dict[table]:
+                self.add_data(table, rows, data)
+            self.save()
+    def get_data(self, table, col=None, val=None):
+        if col and val:
+            self.cursor.execute(f'SELECT * FROM {table} WHERE {col} = "{val}"')
+        else:
+            self.cursor.execute(f'SELECT * FROM {table}')
+        return self.cursor.fetchall()
