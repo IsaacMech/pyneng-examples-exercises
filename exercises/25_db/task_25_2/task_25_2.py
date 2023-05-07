@@ -110,9 +110,9 @@ class DBHandler():
             for data in data_dict[table]:
                 self.add_data(table, rows, data)
             self.save()
-    def get_data(self, table, col=None, val=None):
+    def get_data(self, table, col=None, val=None, sel_col='*'):
         if col and val:
-            self.cursor.execute(f'SELECT * FROM {table} WHERE {col} = "{val}"')
+            self.cursor.execute(f'SELECT {sel_col} FROM {table} WHERE {col} = "{val}"')
         else:
-            self.cursor.execute(f'SELECT * FROM {table}')
+            self.cursor.execute(f'SELECT {sel_col} FROM {table}')
         return self.cursor.fetchall()
