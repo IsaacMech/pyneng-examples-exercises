@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import argparse
-
+import glob
 import parse_dhcp_snooping_functions as pds
 
 # Default values:
@@ -15,13 +15,16 @@ def create(args):
 
 
 def add(args):
+    files = []
+    for file in args.filename:
+        files += glob.glob(file)
     if args.sw_true:
         print("Добавляю данные о коммутаторах")
-        pds.add_data_switches(args.db_file, args.filename)
+        pds.add_data_switches(args.db_file, files)
     else:
-        print("Читаю информацию из файлов\n{}".format(", ".join(args.filename)))
+        print("Читаю информацию из файлов\n{}".format(", ".join(files)))
         print("\nДобавляю данные по DHCP записям в {}".format(args.db_file))
-        pds.add_data(args.db_file, args.filename)
+        pds.add_data(args.db_file, files)
 
 
 def get(args):
